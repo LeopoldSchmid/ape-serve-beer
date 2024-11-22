@@ -1,0 +1,77 @@
+<div class="max-w-4xl mx-auto p-4">
+  <div class="mb-4 flex items-center justify-between">
+    <h1 class="text-2xl font-bold"><%= @topic.title %></h1>
+    <%= link_to "Back to Forums", topics_path, class: "text-blue-600 hover:text-blue-800" %>
+  </div>
+
+  <!-- Original post -->
+  <div class="bg-white shadow rounded-lg mb-4">
+    <div class="border-b p-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <div class="bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center">
+            <span class="text-blue-800 font-bold"><%= @topic.author_name.first.upcase %></span>
+          </div>
+          <div class="ml-3">
+            <div class="font-bold"><%= @topic.author_name %></div>
+            <div class="text-sm text-gray-500">
+              Posted <%= time_ago_in_words(@topic.created_at) %> ago
+            </div>
+          </div>
+        </div>
+        <%= link_to "Edit", edit_topic_path(@topic), class: "text-sm text-gray-500 hover:text-gray-700" %>
+      </div>
+    </div>
+    <div class="p-4 prose max-w-none">
+      <%= @topic.content %>
+    </div>
+  </div>
+
+  <!-- Replies -->
+  <div class="space-y-4">
+    <% @topic.replies.order(created_at: :asc).each do |reply| %>
+      <div class="bg-white shadow rounded-lg">
+        <div class="border-b p-4">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center">
+              <div class="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center">
+                <span class="text-gray-800 font-bold"><%= reply.author_name.first.upcase %></span>
+              </div>
+              <div class="ml-3">
+                <div class="font-bold"><%= reply.author_name %></div>
+                <div class="text-sm text-gray-500">
+                  Posted <%= time_ago_in_words(reply.created_at) %> ago
+                </div>
+              </div>
+            </div>
+            <%= link_to "Edit", edit_reply_path(reply), class: "text-sm text-gray-500 hover:text-gray-700" %>
+          </div>
+        </div>
+        <div class="p-4 prose max-w-none">
+          <%= reply.content %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Quick Reply Form -->
+  <div class="mt-6 bg-white shadow rounded-lg p-4">
+    <h2 class="text-lg font-bold mb-4">Quick Reply</h2>
+    <%= form_with(model: [@topic, Reply.new], class: "space-y-4", data: { controller: "submit-form" }) do |form| %>
+      <div>
+        <%= form.label :author_name, class: "block text-gray-700 font-bold mb-2" %>
+        <%= form.text_field :author_name, class: "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+      </div>
+
+      <div>
+        <%= form.label :content, class: "block text-gray-700 font-bold mb-2" %>
+        <%= form.text_area :content, rows: 4, class: "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+        <p class="text-sm text-gray-500 mt-1">Press Ctrl+Enter to submit</p>
+      </div>
+
+      <div class="flex justify-end">
+        <%= form.submit "Post Reply", class: "bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600" %>
+      </div>
+    <% end %>
+  </div>
+</div>

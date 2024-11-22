@@ -1,0 +1,49 @@
+<div class="max-w-4xl mx-auto p-4">
+  <div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">Forum Topics</h1>
+    <%= link_to "New Topic", new_topic_path, class: "bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600" %>
+  </div>
+
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-3 border-b bg-gray-50">
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-6 font-semibold">Topic</div>
+        <div class="col-span-2 font-semibold text-center">Replies</div>
+        <div class="col-span-2 font-semibold">Started By</div>
+        <div class="col-span-2 font-semibold">Last Post</div>
+      </div>
+    </div>
+
+    <div class="divide-y">
+      <% @topics.order(updated_at: :desc).each do |topic| %>
+        <div class="px-4 py-3 hover:bg-gray-50">
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-6">
+              <%= link_to topic.title, topic_path(topic), class: "text-blue-600 hover:text-blue-800 font-medium" %>
+              <p class="text-sm text-gray-500 mt-1 truncate"><%= topic.content %></p>
+            </div>
+            <div class="col-span-2 text-center">
+              <span class="text-gray-600"><%= topic.replies.count %></span>
+            </div>
+            <div class="col-span-2">
+              <div class="text-sm">
+                <div class="font-medium"><%= topic.author_name %></div>
+                <div class="text-gray-500"><%= time_ago_in_words(topic.created_at) %> ago</div>
+              </div>
+            </div>
+            <div class="col-span-2">
+              <% if topic.replies.any? %>
+                <div class="text-sm">
+                  <div class="font-medium"><%= topic.replies.last.author_name %></div>
+                  <div class="text-gray-500"><%= time_ago_in_words(topic.replies.last.created_at) %> ago</div>
+                </div>
+              <% else %>
+                <div class="text-sm text-gray-500">No replies yet</div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<%= form_with(model: [@topic, reply], class: "max-w-lg mx-auto", data: { controller: "submit-form" }) do |form| %>
+  <% if reply.errors.any? %>
+    <div class="bg-red-50 text-red-500 p-4 rounded-lg mb-6">
+      <h2><%= pluralize(reply.errors.count, "error") %> prohibited this reply from being saved:</h2>
+      <ul>
+        <% reply.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-4">
+    <%= form.label :author_name, class: "block text-gray-700 font-bold mb-2" %>
+    <%= form.text_field :author_name, class: "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :content, class: "block text-gray-700 font-bold mb-2" %>
+    <%= form.text_area :content, rows: 4, class: "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+    <p class="text-sm text-gray-500 mt-1">Press Ctrl+Enter to submit</p>
+  </div>
+
+  <div class="flex justify-end">
+    <%= form.submit class: "bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600" %>
+  </div>
+<% end %>
