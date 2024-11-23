@@ -35,7 +35,7 @@ sudo docker rm ape_serve_beer || true
 echo "Starting new container..."
 sudo docker run -d \
   --name ape_serve_beer \
-  -p 80:80 \
+  -p 3000:3000 \
   -e RAILS_MASTER_KEY=$(cat config/master.key) \
   -v $(pwd)/storage:/rails/storage \
   -v $(pwd)/db:/rails/db \
