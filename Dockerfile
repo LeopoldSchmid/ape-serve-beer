@@ -9,72 +9,60 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.3.6
-FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+FROM ruby:3.3.0-slim as builder
 
-# Rails app lives here
+# Install essential Linux packages
+RUN apt-get update -qq && \
+    apt-get install -y build-essential libvips pkg-config git sqlite3 libsqlite3-dev nodejs npm
+
+# Set working directory
 WORKDIR /rails
 
-# Install base packages
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
-
-# Set production environment
-ENV RAILS_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
-
-# Throw-away build stage to reduce size of final image
-FROM base AS build
-
-# Install packages needed to build gems
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git pkg-config libpq-dev nodejs npm && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
-
-# Install application gems
+# Install dependencies
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    bundle exec bootsnap precompile --gemfile
+RUN bundle config set --local deployment true && \
+    bundle config set --local without 'development test' && \
+    bundle install --jobs 4 --retry 3
 
 # Copy application code
 COPY . .
 
-# Precompile bootsnap code for faster boot times
-RUN bundle exec bootsnap precompile app/ lib/
+# Precompile assets
+RUN SECRET_KEY_BASE=dummy bundle exec rails assets:precompile
 
-# Adjust binfiles to be executable on Linux
-RUN chmod +x bin/* && \
-    sed -i "s/\r$//g" bin/* && \
-    sed -i 's/ruby\.exe$/ruby/' bin/*
-
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
-
-# Final stage for app image
-FROM base
-
-# Copy built artifacts: gems, application
-COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
-COPY --from=build /rails /rails
+# Create production image
+FROM ruby:3.3.0-slim
 
 # Install runtime dependencies
 RUN apt-get update -qq && \
-    apt-get install -y libvips postgresql-client nodejs npm && \
+    apt-get install -y libvips sqlite3 nodejs npm && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man
 
-# Run and own only the runtime files as a non-root user for security
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp
-USER 1000:1000
+# Create app directory
+WORKDIR /rails
 
-# Entrypoint prepares the database.
-# ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+# Create rails user
+RUN groupadd -r rails && useradd -r -g rails -d /rails -s /bin/false rails
 
-# Start server via Thruster by default, this can be overwritten at runtime
+# Copy app with precompiled assets
+COPY --from=builder --chown=rails:rails /rails /rails
+COPY --from=builder --chown=rails:rails /usr/local/bundle /usr/local/bundle
+
+# Create and set permissions for required directories
+RUN mkdir -p /rails/tmp/pids /rails/tmp/cache /rails/log /rails/storage /rails/db && \
+    chown -R rails:rails /rails/tmp /rails/log /rails/storage /rails/db && \
+    chmod -R 755 /rails/tmp /rails/log /rails/storage /rails/db
+
+# Switch to rails user
+USER rails
+
+# Add entrypoint script
+COPY --chown=rails:rails entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Configure the main process to run when running the image
 EXPOSE 3000
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]

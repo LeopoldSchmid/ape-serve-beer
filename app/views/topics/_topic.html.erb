@@ -1,17 +1,18 @@
-<div id="<%= dom_id topic %>">
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Title:</strong>
-    <%= topic.title %>
-  </p>
+<div class="bg-white shadow rounded-lg p-6">
+  <div class="flex justify-between items-start mb-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900"><%= topic.title %></h2>
+      <p class="text-sm text-gray-500">
+        Posted by <%= topic.author_name %> • <%= time_ago_in_words(topic.created_at) %> ago
+      </p>
+    </div>
+    <div class="flex space-x-2">
+      <%= link_to 'Edit', edit_topic_path(topic), class: 'text-blue-600 hover:text-blue-800' %>
+      <%= link_to 'Delete', topic_path(topic), data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' }, class: 'text-red-600 hover:text-red-800' %>
+    </div>
+  </div>
 
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Content:</strong>
+  <div class="prose max-w-none">
     <%= topic.content %>
-  </p>
-
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Author name:</strong>
-    <%= topic.author_name %>
-  </p>
-
+  </div>
 </div>

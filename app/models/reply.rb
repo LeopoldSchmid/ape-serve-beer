@@ -1,5 +1,6 @@
 class Reply < ApplicationRecord
   belongs_to :topic
-  validates :content, presence: true
+  has_rich_text :content
+  
   validates :author_name, presence: true
 end

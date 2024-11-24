@@ -1,17 +1,22 @@
 #!/bin/bash
 set -e
 
-# Remove a potentially pre-existing server.pid for Rails
+# Environment checks
+if [ -z "$RAILS_ENV" ]; then
+  export RAILS_ENV=production
+fi
+
+if [ -z "$SECRET_KEY_BASE" ]; then
+  echo "ERROR: SECRET_KEY_BASE is not set!"
+  exit 1
+fi
+
+# Database setup and migrations
+echo "Running database migrations..."
+bundle exec rails db:migrate 2>/dev/null || bundle exec rails db:setup
+
+# Remove any existing server.pid file
 rm -f /rails/tmp/pids/server.pid
 
-# Wait for database
-until bundle exec rails db:version > /dev/null 2>&1; do
-  echo "Waiting for database..."
-  sleep 2
-done
-
-# Run database migrations
-bundle exec rails db:migrate
-
-# Then exec the container's main process (what's set as CMD in the Dockerfile)
+# Execute the main command
 exec "$@"
