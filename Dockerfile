@@ -9,7 +9,7 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.3.6
-FROM ruby:3.3.0-slim as builder
+FROM ruby:3.3.0-slim AS builder
 
 # Install essential Linux packages
 RUN apt-get update -qq && \
